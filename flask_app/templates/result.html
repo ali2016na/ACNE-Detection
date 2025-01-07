@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Acne Analysis Results</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @keyframes slideIn {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .slide-in {
+        animation: slideIn 0.5s ease-out forwards;
+      }
+
+      .result-card {
+        animation: slideIn 0.5s ease-out forwards;
+        animation-delay: 0.3s;
+        opacity: 0;
+      }
+
+      .back-button {
+        animation: slideIn 0.5s ease-out forwards;
+        animation-delay: 0.6s;
+        opacity: 0;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      .pulse {
+        animation: pulse 2s infinite;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-50">
+    <div class="container mx-auto px-4 py-12 max-w-4xl">
+      <!-- Header -->
+      <div class="text-center mb-8 slide-in">
+        <h1 class="text-4xl font-bold text-indigo-700 mb-4">
+          Analysis Results
+        </h1>
+        <p class="text-gray-600">AI-powered skin condition assessment</p>
+      </div>
+
+      <!-- Results Card -->
+      <div class="bg-white rounded-xl shadow-xl p-8 mb-8 result-card">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Image Preview -->
+          <div class="border rounded-lg p-4">
+            <h3 class="text-lg font-semibold mb-4 text-gray-700">
+              Analyzed Image
+            </h3>
+            <div class="aspect-w-4 aspect-h-3">
+              <img
+                src="{{ url_for('static', filename=image_path) }}"
+                alt="Analyzed skin image"
+                class="rounded-lg object-cover w-full h-full shadow-md"
+              />
+            </div>
+          </div>
+
+          <!-- Analysis Results -->
+          <div class="flex flex-col justify-center">
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold mb-2 text-gray-700">
+                Detection Result
+              </h3>
+              <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-100">
+                <p class="text-2xl font-bold text-indigo-700 pulse">
+                  {{ class_name }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Confidence Score -->
+            <div class="mb-6">
+              <h3 class="text-lg font-semibold mb-2 text-gray-700">
+                AI Confidence Level
+              </h3>
+              <div class="bg-gray-100 rounded-full h-4 overflow-hidden">
+                <div
+                  class="bg-indigo-600 h-full rounded-full transition-all duration-1000"
+                  style="width: 0%"
+                  id="confidenceBar"
+                ></div>
+              </div>
+              <p class="text-sm text-gray-600 mt-2">
+                <span id="confidenceText">0</span>% confidence in assessment
+              </p>
+            </div>
+
+            <!-- Recommendations -->
+            <div id="recommendations">
+              <h3 class="text-lg font-semibold mb-2 text-gray-700">
+                Next Steps
+              </h3>
+              <ul class="space-y-2 text-gray-600" id="recommendationList">
+                <!-- Recommendations will be dynamically added here -->
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex justify-center space-x-4 back-button">
+        <a
+          href="/"
+          class="bg-white text-indigo-600 px-6 py-3 rounded-lg hover:bg-indigo-50 transition-colors duration-300 flex items-center shadow-md"
+        >
+          <svg
+            class="h-5 w-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          Analyze Another Image
+        </a>
+        <button
+          onclick="window.print()"
+          class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors duration-300 flex items-center shadow-md"
+        >
+          <svg
+            class="h-5 w-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+            />
+          </svg>
+          Save Report
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Animate confidence bar on load
+      window.addEventListener('load', () => {
+          const confidenceBar = document.getElementById('confidenceBar');
+          const confidenceText = document.getElementById('confidenceText');
+          const targetConfidence = {{ confidence_score }};
+
+          // Animate the confidence percentage
+          let currentConfidence = 0;
+          const duration = 1000; // 1 second
+          const interval = 10; // Update every 10ms
+          const steps = duration / interval;
+          const increment = targetConfidence / steps;
+
+          const timer = setInterval(() => {
+              currentConfidence += increment;
+              if (currentConfidence >= targetConfidence) {
+                  currentConfidence = targetConfidence;
+                  clearInterval(timer);
+              }
+              confidenceBar.style.width = `${currentConfidence}%`;
+              confidenceText.textContent = Math.round(currentConfidence);
+          }, interval);
+      });
+    </script>
+
+    <script>
+      // Define recommendations for each class
+      const recommendations = {
+        Comedo: [
+          "Use Benzoyl Peroxide ointments like PanOxyl.",
+          "Apply Adapalene gel such as Differin.",
+          "Try Salicylic Acid-based products for exfoliation.",
+        ],
+        Acne: [
+          "Use Clindamycin or Erythromycin topical antibiotics.",
+          "Apply Azelaic Acid to reduce redness and bacteria.",
+          "Consult a dermatologist for retinoid treatments.",
+        ],
+        Clear: [
+          "Maintain a consistent skincare routine.",
+          "Keep your skin hydrated with a gentle moisturizer.",
+          "Use sunscreen daily to protect your skin.",
+        ],
+      };
+
+      // Get class name and recommendation list element
+      const className = "{{ class_name }}"; // This should be dynamically set by your backend
+      const recommendationList = document.getElementById("recommendationList");
+
+      // Populate recommendations based on the class
+      if (recommendations[className]) {
+        recommendations[className].forEach((recommendation) => {
+          const li = document.createElement("li");
+          li.classList.add("flex", "items-center");
+          li.innerHTML = `
+                <svg class="h-5 w-5 text-indigo-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                ${recommendation}
+            `;
+          recommendationList.appendChild(li);
+        });
+      } else {
+        // Fallback message
+        const li = document.createElement("li");
+        li.textContent = "No specific recommendations available.";
+        recommendationList.appendChild(li);
+      }
+    </script>
+  </body>
+</html>
